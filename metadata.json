@@ -1,0 +1,9 @@
+{
+  "name": "Mr. K's Admin - Restaurant Management SaaS",
+  "description": "A high-performance management dashboard for the Mr. K's Crispy Pata franchise, featuring real-time order tracking, inventory management, and branch analytics.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
