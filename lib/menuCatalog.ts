@@ -72,16 +72,18 @@ const STOREFRONT_IMAGE_BY_MENU_NAME: ReadonlyMap<string, string> = new Map(
 );
 
 /**
- * Customer menu: use the catalog photo when the dish name matches the printed menu.
- * New or renamed items fall back to `databaseImageUrl` (from Supabase).
+ * Customer menu image: Supabase `image_url` wins when set (admin override).
+ * Otherwise use the printed-menu Pexels photo when the dish name matches the seed.
  */
 export function storefrontImageForMenuName(
   name: string,
   databaseImageUrl: string | null | undefined
 ): string {
+  const db = (databaseImageUrl ?? '').trim();
+  if (db) return db;
   const fromCatalog = STOREFRONT_IMAGE_BY_MENU_NAME.get(normalizeMenuLookupKey(name));
   if (fromCatalog) return fromCatalog;
-  return (databaseImageUrl ?? '').trim();
+  return '';
 }
 
 export type MenuDisplayRow = {
