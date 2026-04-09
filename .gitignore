@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 .npm-cache
+.npm-cache-cli
+.tmp-deploy
 *.local
 
 # Editor directories and files

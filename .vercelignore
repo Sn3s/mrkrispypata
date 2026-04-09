@@ -1,2 +1,4 @@
 .npm-cache
+.npm-cache-cli
+.tmp-deploy
 migrated_prompt_history
