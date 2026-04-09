@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm install --no-fund --no-audit",
+  "installCommand": "npm ci --no-fund --no-audit",
   "buildCommand": "npm run build",
   "outputDirectory": "dist"
 }
