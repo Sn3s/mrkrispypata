@@ -33,6 +33,7 @@ import {
   storefrontImageForMenuName,
   type MenuDisplayRow,
 } from '../lib/menuCatalog';
+import { BranchesMap } from '../components/BranchesMap';
 
 interface HomeViewProps {
   onAdminClick: () => void;
@@ -1212,19 +1213,19 @@ const BranchesView = ({
           </div>
         ))}
       </div>
-      <div className="lg:col-span-8 h-[700px] bg-white/5 rounded-[48px] overflow-hidden border border-white/10 relative group shadow-2xl">
-        <img
-          src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=1600"
-          className="w-full h-full object-cover opacity-30 grayscale group-hover:opacity-40 group-hover:grayscale-0 transition-all duration-1000"
-          alt="Map"
+      <div className="lg:col-span-8 h-[min(70vh,700px)] min-h-[320px] rounded-[48px] overflow-hidden border border-white/10 shadow-2xl bg-[#0e0e0e]">
+        <BranchesMap
+          className="h-full w-full"
+          branches={branches.map((b) => ({
+            id: b.id,
+            name: b.name,
+            lat: b.lat,
+            lng: b.lng,
+            status: b.status,
+          }))}
+          selectedBranchId={selectedBranchId}
+          onSelectBranch={onSelectBranch}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none" />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="bg-black/80 backdrop-blur-md px-10 py-6 rounded-3xl border border-white/10 text-center">
-            <p className="text-white/60 font-bold uppercase tracking-widest text-xs mb-2">Branch locations</p>
-            <h5 className="text-white text-2xl font-black italic">Data from Supabase</h5>
-          </div>
-        </div>
       </div>
     </div>
   </main>
