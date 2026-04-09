@@ -304,10 +304,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onLogout }) => {
       <div className="min-h-screen bg-background text-white flex items-center justify-center p-8">
         <form onSubmit={handleSignIn} className="w-full max-w-md bg-card border border-border rounded-3xl p-10 space-y-6">
           <h1 className="text-3xl font-black tracking-tight">Admin sign in</h1>
-          <p className="text-muted text-sm font-medium">
-            Use a Supabase Auth user that has <code className="text-primary">is_admin = true</code> in{' '}
-            <code>profiles</code>.
-          </p>
           {authError && <p className="text-error text-sm font-bold">{authError}</p>}
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase text-muted tracking-widest">Email</label>
