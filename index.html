@@ -57,12 +57,17 @@
       ::-webkit-scrollbar-thumb:hover {
         background: #333333;
       }
-      /* Leaflet (branches map) */
+      /* Leaflet (branches map) — keep tiles/panes under sticky header (z-[100]); modals use z-[125]+ */
+      .branches-map-root {
+        position: relative;
+        z-index: 0;
+      }
       .branches-map-root .leaflet-container {
         height: 100%;
         width: 100%;
         background: #0e0e0e;
         font-family: inherit;
+        z-index: 0;
       }
       .branches-map-root .leaflet-control-zoom a {
         background: #1a1a1a;

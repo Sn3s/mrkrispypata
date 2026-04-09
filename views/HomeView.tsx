@@ -627,7 +627,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onAdminClick }) => {
           </button>
         </div>
       )}
-      <nav className="h-24 flex items-center justify-between px-16 sticky top-0 bg-[#0B0B0B]/90 backdrop-blur-md z-50 border-b border-white/5">
+      <nav className="h-24 flex items-center justify-between px-16 sticky top-0 bg-[#0B0B0B]/90 backdrop-blur-md z-[100] border-b border-white/5">
         <div onClick={() => setActiveSection('home')}>
           <BrandLogo />
         </div>
@@ -1258,7 +1258,7 @@ const BranchesView = ({
           </div>
         ))}
       </div>
-      <div className="lg:col-span-8 h-[min(70vh,700px)] min-h-[320px] rounded-[48px] overflow-hidden border border-white/10 shadow-2xl bg-[#0e0e0e]">
+      <div className="lg:col-span-8 h-[min(70vh,700px)] min-h-[320px] rounded-[48px] overflow-hidden border border-white/10 shadow-2xl bg-[#0e0e0e] relative z-0 isolate">
         <BranchesMap
           className="h-full w-full"
           branches={branches.map((b) => ({
