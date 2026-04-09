@@ -251,44 +251,34 @@ export const AdminView: React.FC<AdminViewProps> = ({ onLogout }) => {
   };
 
   if (!isSupabaseConfigured()) {
-    const isProdBuild = import.meta.env.PROD;
     return (
       <div className="min-h-screen bg-background text-white flex items-center justify-center p-8">
         <div className="max-w-lg bg-card border border-border rounded-3xl p-10 space-y-4">
           <h1 className="text-2xl font-black">Supabase not configured</h1>
-          {isProdBuild ? (
-            <div className="text-muted font-medium space-y-3">
-              <p>
-                This is a <strong className="text-white">production build</strong>. Vite bakes{' '}
-                <code className="text-primary">VITE_SUPABASE_URL</code> and{' '}
-                <code className="text-primary">VITE_SUPABASE_ANON_KEY</code> in at <strong className="text-white">build time</strong>.
-                Your <code className="text-white/80">.env.local</code> file is not used on the server that built this site.
-              </p>
-              <p>
-                In <strong className="text-white">Vercel</strong> (or your host): open the project →{' '}
-                <strong className="text-white">Settings → Environment Variables</strong>, add both variables for{' '}
-                <strong className="text-white">Production</strong> (and Preview if needed), then trigger a{' '}
-                <strong className="text-white">new deployment</strong>.
-              </p>
-              <p className="text-sm text-white/40">
-                After the database exists, run <code className="text-primary">supabase/APPLY_ALL.sql</code> in the Supabase SQL Editor once.
-              </p>
-            </div>
-          ) : (
-            <div className="text-muted font-medium space-y-3">
-              <p>
-                Add <code className="text-primary">VITE_SUPABASE_URL</code> and{' '}
-                <code className="text-primary">VITE_SUPABASE_ANON_KEY</code> to{' '}
-                <code className="text-white/80">.env.local</code> in the <strong className="text-white">project root</strong> (same folder as{' '}
-                <code className="text-white/80">package.json</code>), then <strong className="text-white">stop and restart</strong>{' '}
-                <code className="text-primary">npm run dev</code> — Vite only reads env when it starts.
-              </p>
-              <p>
-                Run the SQL in <code className="text-primary">supabase/APPLY_ALL.sql</code> in the Supabase SQL Editor (or migrations in order),
-                then reload.
-              </p>
-            </div>
-          )}
+          <div className="text-muted font-medium space-y-3">
+            <p>
+              <strong className="text-white">Local:</strong> add <code className="text-primary">VITE_SUPABASE_URL</code> and{' '}
+              <code className="text-primary">VITE_SUPABASE_ANON_KEY</code> to <code className="text-white/80">.env.local</code>, then restart{' '}
+              <code className="text-primary">npm run dev</code>.
+            </p>
+            <p>
+              <strong className="text-white">Vercel:</strong> in <strong className="text-white">Settings → Environment Variables</strong>, set{' '}
+              <strong className="text-white">either</strong> pair for <strong className="text-white">Production</strong> (and Preview if you use it):
+            </p>
+            <ul className="list-disc pl-5 text-sm space-y-1 text-white/70">
+              <li>
+                <code className="text-primary">VITE_SUPABASE_URL</code> + <code className="text-primary">VITE_SUPABASE_ANON_KEY</code> (baked in at
+                build — redeploy after changing)
+              </li>
+              <li>
+                <code className="text-primary">SUPABASE_URL</code> + <code className="text-primary">SUPABASE_ANON_KEY</code> (same values; read at
+                runtime via <code className="text-white/80">/api/supabase-config</code> — redeploy once after adding)
+              </li>
+            </ul>
+            <p className="text-sm text-white/40">
+              Database: run <code className="text-primary">supabase/APPLY_ALL.sql</code> in the Supabase SQL Editor once.
+            </p>
+          </div>
           <button
             type="button"
             onClick={onLogout}
