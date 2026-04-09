@@ -425,3 +425,27 @@ update public.menu_items set image_url = 'https://images.pexels.com/photos/43931
 drop policy if exists orders_update_admin on public.orders;
 create policy orders_update_admin on public.orders
   for update using (public.is_admin()) with check (public.is_admin());
+
+-- ---------- Realtime: storefront live-refresh when admin edits menu / promos ----------
+do $pub$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'menu_items'
+  ) then
+    alter publication supabase_realtime add table public.menu_items;
+  end if;
+
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'promos'
+  ) then
+    alter publication supabase_realtime add table public.promos;
+  end if;
+end $pub$;

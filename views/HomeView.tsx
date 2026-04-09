@@ -406,6 +406,51 @@ export const HomeView: React.FC<HomeViewProps> = ({ onAdminClick }) => {
     loadCatalog();
   }, [loadCatalog]);
 
+  const catalogReloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const scheduleCatalogReload = useCallback(() => {
+    if (catalogReloadTimerRef.current) clearTimeout(catalogReloadTimerRef.current);
+    catalogReloadTimerRef.current = setTimeout(() => {
+      catalogReloadTimerRef.current = null;
+      void loadCatalog();
+    }, 400);
+  }, [loadCatalog]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    const sb = getSupabase();
+    const channel = sb
+      .channel('storefront-catalog')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'menu_items' },
+        () => scheduleCatalogReload()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'promos' },
+        () => scheduleCatalogReload()
+      )
+      .subscribe();
+
+    return () => {
+      if (catalogReloadTimerRef.current) {
+        clearTimeout(catalogReloadTimerRef.current);
+        catalogReloadTimerRef.current = null;
+      }
+      void sb.removeChannel(channel);
+    };
+  }, [scheduleCatalogReload]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    const onVis = () => {
+      if (document.visibilityState === 'visible') scheduleCatalogReload();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [scheduleCatalogReload]);
+
   const parsePriceToPesos = (item: { price?: string | number }) => {
     if (typeof item.price === 'number') return item.price;
     const s = (item.price ?? '').toString();
