@@ -75,6 +75,19 @@ const FALLBACK_PROMOS = [
   { id: 'promo-icedtea', image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&q=80&w=800', tag: 'Freebie', title: 'Free 1.5L Iced Tea', description: 'Get a free bottle of our signature house blend iced tea for orders above ₱2,500.', price: 'FREE' },
 ];
 
+type PromoRow = {
+  id: string;
+  image: string;
+  tag: string;
+  title: string;
+  description: string;
+  price: string;
+};
+
+type StorefrontDetail =
+  | { kind: 'menu'; item: MenuDisplayRow }
+  | { kind: 'promo'; promo: PromoRow };
+
 const BrandLogo = ({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) => {
   const scale = size === 'sm' ? 'scale-75' : size === 'lg' ? 'scale-125' : 'scale-100';
   return (
@@ -89,6 +102,166 @@ const BrandLogo = ({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) => {
       <div className="flex flex-col -space-y-1">
         <span className="text-[#FFD100] font-black text-sm tracking-[0.2em] uppercase leading-none">CRISPY</span>
         <span className="text-white font-black text-lg tracking-tighter italic leading-none">PATA</span>
+      </div>
+    </div>
+  );
+};
+
+const StorefrontItemDetailModal = ({
+  detail,
+  onClose,
+  onAddToCart,
+}: {
+  detail: StorefrontDetail | null;
+  onClose: () => void;
+  onAddToCart: (item: { id: string; name: string; price?: string | number; image?: string }) => void;
+}) => {
+  useEffect(() => {
+    if (!detail) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [detail, onClose]);
+
+  if (!detail) return null;
+
+  const titleId = 'storefront-item-detail-title';
+
+  if (detail.kind === 'menu') {
+    const { item } = detail;
+    return (
+      <div className="fixed inset-0 z-[125] flex items-center justify-center p-4 sm:p-6">
+        <div className="absolute inset-0 bg-black/85 backdrop-blur-md" onClick={onClose} aria-hidden />
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          className="relative w-full max-w-4xl max-h-[min(90vh,880px)] overflow-hidden rounded-[40px] border border-white/10 bg-[#111111] shadow-[0_0_80px_rgba(0,0,0,0.75)] flex flex-col md:flex-row animate-in fade-in zoom-in duration-300"
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-4 right-4 z-10 w-11 h-11 rounded-full bg-black/60 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <div className="md:w-[46%] h-52 sm:h-64 md:h-auto md:min-h-[340px] shrink-0 relative bg-black/50">
+            {item.image ? (
+              <img src={item.image} className="absolute inset-0 w-full h-full object-cover" alt="" />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-white/25">
+                <UtensilsCrossed className="w-16 h-16" />
+              </div>
+            )}
+          </div>
+          <div className="flex-1 p-8 md:p-10 overflow-y-auto flex flex-col gap-5 min-h-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FFD100]/90 bg-[#FFD100]/10 border border-[#FFD100]/25 px-3 py-1 rounded-xl">
+                {item.category}
+              </span>
+              {item.recommended && (
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-400 bg-red-500/10 border border-red-500/25 px-3 py-1 rounded-xl flex items-center gap-1">
+                  <Heart className="w-3 h-3 fill-current" aria-hidden /> Favorite
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+              <h2 id={titleId} className="text-white text-2xl md:text-3xl font-black tracking-tight leading-tight pr-4">
+                {item.name}
+              </h2>
+              <span className="text-[#FFD100] font-black text-2xl shrink-0">{item.price}</span>
+            </div>
+            {item.desc ? (
+              <p className="text-white/55 text-base font-medium leading-relaxed">{item.desc}</p>
+            ) : (
+              <p className="text-white/35 text-sm font-medium italic">No description yet — ask the branch for details.</p>
+            )}
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 mt-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  onAddToCart({ id: item.id, name: item.name, price: item.price, image: item.image });
+                }}
+                className="flex-1 py-4 rounded-2xl font-black uppercase text-xs tracking-widest bg-[#FFD100] text-black hover:brightness-110 transition-all flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" /> Add to Order
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="sm:w-40 py-4 rounded-2xl font-black uppercase text-xs tracking-widest bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const { promo } = detail;
+  return (
+    <div className="fixed inset-0 z-[125] flex items-center justify-center p-4 sm:p-6">
+      <div className="absolute inset-0 bg-black/85 backdrop-blur-md" onClick={onClose} aria-hidden />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="relative w-full max-w-4xl max-h-[min(90vh,880px)] overflow-hidden rounded-[40px] border border-white/10 bg-[#111111] shadow-[0_0_80px_rgba(0,0,0,0.75)] flex flex-col md:flex-row animate-in fade-in zoom-in duration-300"
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 z-10 w-11 h-11 rounded-full bg-black/60 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
+          aria-label="Close"
+        >
+          <X className="w-5 h-5" />
+        </button>
+        <div className="md:w-[46%] h-52 sm:h-64 md:h-auto md:min-h-[340px] shrink-0 relative bg-black/50">
+          {promo.image ? (
+            <img src={promo.image} className="absolute inset-0 w-full h-full object-cover" alt="" />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-white/25">
+              <UtensilsCrossed className="w-16 h-16" />
+            </div>
+          )}
+          {promo.tag ? (
+            <div className="absolute top-4 left-4">
+              <span className="bg-[#FFD100] text-black px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">
+                {promo.tag}
+              </span>
+            </div>
+          ) : null}
+        </div>
+        <div className="flex-1 p-8 md:p-10 overflow-y-auto flex flex-col gap-5 min-h-0">
+          <h2 id={titleId} className="text-white text-2xl md:text-3xl font-black tracking-tight leading-tight">
+            {promo.title}
+          </h2>
+          <p className="text-[#FFD100] font-black text-2xl">{promo.price}</p>
+          <p className="text-white/55 text-base font-medium leading-relaxed">{promo.description}</p>
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 mt-auto">
+            <button
+              type="button"
+              onClick={() => {
+                onAddToCart({ id: promo.id, name: promo.title, price: promo.price, image: promo.image });
+              }}
+              className="flex-1 py-4 rounded-2xl font-black uppercase text-xs tracking-widest bg-[#FFD100] text-black hover:brightness-110 transition-all flex items-center justify-center gap-2"
+            >
+              <Plus className="w-4 h-4" /> Add to Order
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="sm:w-40 py-4 rounded-2xl font-black uppercase text-xs tracking-widest bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
+            >
+              Close
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -109,6 +282,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onAdminClick }) => {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  const [storefrontDetail, setStorefrontDetail] = useState<StorefrontDetail | null>(null);
 
   const selectedBranchName = useMemo(
     () => branches.find((b) => b.id === selectedBranchId)?.name ?? null,
@@ -348,6 +522,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onAdminClick }) => {
           <MenuView
             onBack={() => setActiveSection('home')}
             onAddToCart={addToCart}
+            onItemOpen={(item) => setStorefrontDetail({ kind: 'menu', item })}
             selectedBranchName={selectedBranchName}
             items={menuRows}
             loading={catalogLoading}
@@ -368,13 +543,20 @@ export const HomeView: React.FC<HomeViewProps> = ({ onAdminClick }) => {
         );
       case 'promos':
         return (
-          <PromosView onBack={() => setActiveSection('home')} onAddToCart={addToCart} promos={promoRows} loading={catalogLoading} />
+          <PromosView
+            onBack={() => setActiveSection('home')}
+            onAddToCart={addToCart}
+            onPromoOpen={(p) => setStorefrontDetail({ kind: 'promo', promo: p })}
+            promos={promoRows}
+            loading={catalogLoading}
+          />
         );
       default:
         return (
           <LandingContent
             onNavTo={(s) => setActiveSection(s)}
             onAddToCart={addToCart}
+            onPromoOpen={(p) => setStorefrontDetail({ kind: 'promo', promo: p })}
             selectedBranchLabel={selectedBranchName}
             promos={promoRows}
             loading={catalogLoading}
@@ -453,6 +635,15 @@ export const HomeView: React.FC<HomeViewProps> = ({ onAdminClick }) => {
       </nav>
 
       {renderContent()}
+
+      <StorefrontItemDetailModal
+        detail={storefrontDetail}
+        onClose={() => setStorefrontDetail(null)}
+        onAddToCart={(item) => {
+          addToCart(item);
+          setStorefrontDetail(null);
+        }}
+      />
 
       {isBranchModalOpen && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center px-6">
@@ -716,14 +907,16 @@ export const HomeView: React.FC<HomeViewProps> = ({ onAdminClick }) => {
 const LandingContent = ({
   onNavTo,
   onAddToCart,
+  onPromoOpen,
   selectedBranchLabel,
   promos,
   loading,
 }: {
   onNavTo: (s: Section) => void;
   onAddToCart: (item: { id: string; name: string; price?: string | number; image?: string }) => void;
+  onPromoOpen: (p: PromoRow) => void;
   selectedBranchLabel: string | null;
-  promos: typeof FALLBACK_PROMOS;
+  promos: PromoRow[];
   loading: boolean;
 }) => (
   <main className="px-16 py-10 space-y-16 max-w-[1600px] mx-auto">
@@ -803,6 +996,7 @@ const LandingContent = ({
             description={p.description}
             price={p.price}
             onAddToCart={onAddToCart}
+            onOpenDetail={() => onPromoOpen(p)}
           />
         ))}
       </div>
@@ -813,12 +1007,14 @@ const LandingContent = ({
 const MenuView = ({
   onBack,
   onAddToCart,
+  onItemOpen,
   selectedBranchName,
   items,
   loading,
 }: {
   onBack: () => void;
   onAddToCart: (item: MenuDisplayRow) => void;
+  onItemOpen: (item: MenuDisplayRow) => void;
   selectedBranchName: string | null;
   items: MenuDisplayRow[];
   loading: boolean;
@@ -894,9 +1090,18 @@ const MenuView = ({
               {catItems.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-[#161616] rounded-[40px] overflow-hidden group border border-white/5 hover:border-[#FFD100]/30 transition-all hover:translate-y-[-8px] flex flex-col"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onItemOpen(item)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onItemOpen(item);
+                    }
+                  }}
+                  className="bg-[#161616] rounded-[40px] overflow-hidden group border border-white/5 hover:border-[#FFD100]/30 transition-all hover:translate-y-[-8px] flex flex-col cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-[#FFD100]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0B0B]"
                 >
-                  <div className="h-56 overflow-hidden">
+                  <div className="h-56 overflow-hidden pointer-events-none">
                     <img
                       src={item.image}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
@@ -904,7 +1109,7 @@ const MenuView = ({
                     />
                   </div>
                   <div className="p-8 space-y-4 flex-1 flex flex-col">
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start justify-between gap-3 pointer-events-none">
                       <h4 className="text-xl font-black leading-tight flex items-start gap-2 min-w-0">
                         {item.recommended && (
                           <Heart
@@ -917,13 +1122,18 @@ const MenuView = ({
                       <span className="text-[#FFD100] font-black text-xl shrink-0">{item.price}</span>
                     </div>
                     {item.desc ? (
-                      <p className="text-white/40 text-sm font-medium leading-relaxed flex-1">{item.desc}</p>
+                      <p className="text-white/40 text-sm font-medium leading-relaxed flex-1 pointer-events-none line-clamp-3">
+                        {item.desc}
+                      </p>
                     ) : (
-                      <div className="flex-1 min-h-[1rem]" />
+                      <div className="flex-1 min-h-[1rem] pointer-events-none" />
                     )}
                     <button
                       type="button"
-                      onClick={() => onAddToCart(item)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAddToCart(item);
+                      }}
                       className="w-full py-4 bg-white/5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-[#FFD100] hover:text-black transition-all flex items-center justify-center gap-2 mt-4"
                     >
                       <Plus className="w-4 h-4" /> Add to Order
@@ -1023,12 +1233,14 @@ const BranchesView = ({
 const PromosView = ({
   onBack,
   onAddToCart,
+  onPromoOpen,
   promos,
   loading,
 }: {
   onBack: () => void;
   onAddToCart: (item: { id: string; name: string; price?: string | number; image?: string }) => void;
-  promos: typeof FALLBACK_PROMOS;
+  onPromoOpen: (p: PromoRow) => void;
+  promos: PromoRow[];
   loading: boolean;
 }) => (
   <main className="px-16 py-10 space-y-16 max-w-[1600px] mx-auto min-h-screen">
@@ -1054,6 +1266,7 @@ const PromosView = ({
           description={p.description}
           price={p.price}
           onAddToCart={onAddToCart}
+          onOpenDetail={() => onPromoOpen(p)}
         />
       ))}
     </div>
@@ -1068,6 +1281,7 @@ const PromoCard = ({
   description,
   price,
   onAddToCart,
+  onOpenDetail,
 }: {
   id: string;
   image: string;
@@ -1076,22 +1290,40 @@ const PromoCard = ({
   description: string;
   price: string;
   onAddToCart: (item: { id: string; name: string; price?: string | number; image?: string }) => void;
+  onOpenDetail: () => void;
 }) => (
-  <div className="bg-[#161616] border border-white/5 rounded-[48px] overflow-hidden flex flex-col group h-full shadow-xl hover:border-[#FFD100]/30 transition-all hover:translate-y-[-8px]">
-    <div className="h-72 relative overflow-hidden">
+  <div
+    role="button"
+    tabIndex={0}
+    onClick={onOpenDetail}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onOpenDetail();
+      }
+    }}
+    className="bg-[#161616] border border-white/5 rounded-[48px] overflow-hidden flex flex-col group h-full shadow-xl hover:border-[#FFD100]/30 transition-all hover:translate-y-[-8px] cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-[#FFD100]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0B0B]"
+  >
+    <div className="h-72 relative overflow-hidden pointer-events-none">
       <img src={image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={title} />
       <div className="absolute top-6 left-6 flex flex-col gap-2">
         <span className="bg-[#FFD100] text-black px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg">{tag}</span>
       </div>
     </div>
     <div className="p-10 flex-1 flex flex-col bg-gradient-to-b from-transparent to-black/20">
-      <h3 className="text-white text-2xl font-extrabold mb-4 tracking-tight group-hover:text-[#FFD100] transition-colors">{title}</h3>
-      <p className="text-white/50 text-[16px] font-medium mb-10 leading-relaxed flex-1">{description}</p>
-      <div className="flex items-center justify-between mt-auto">
-        <span className="text-[#FFD100] font-black text-2xl tracking-tighter">{price}</span>
+      <h3 className="text-white text-2xl font-extrabold mb-4 tracking-tight group-hover:text-[#FFD100] transition-colors pointer-events-none">
+        {title}
+      </h3>
+      <p className="text-white/50 text-[16px] font-medium mb-10 leading-relaxed flex-1 pointer-events-none line-clamp-3">{description}</p>
+      <div className="flex items-center justify-between mt-auto gap-4">
+        <span className="text-[#FFD100] font-black text-2xl tracking-tighter pointer-events-none">{price}</span>
         <button
-          onClick={() => onAddToCart({ id, name: title, price, image })}
-          className="bg-white/5 hover:bg-white/10 text-white px-8 py-3.5 rounded-2xl text-[13px] font-black uppercase tracking-widest transition-all border border-white/5 group-hover:border-[#FFD100]/50 active:scale-95"
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddToCart({ id, name: title, price, image });
+          }}
+          className="bg-white/5 hover:bg-white/10 text-white px-8 py-3.5 rounded-2xl text-[13px] font-black uppercase tracking-widest transition-all border border-white/5 group-hover:border-[#FFD100]/50 active:scale-95 shrink-0"
         >
           Add to Order
         </button>
