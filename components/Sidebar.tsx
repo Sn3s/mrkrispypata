@@ -44,13 +44,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
   return (
     <aside className="hidden lg:flex w-[280px] h-screen fixed left-0 top-0 bg-surface border-r border-border flex-col p-8 z-50">
       <div className="flex items-center gap-4 px-2 mb-14">
-        <div className="relative">
-          <div className="w-12 h-10 bg-primary rounded-lg flex items-center justify-center relative shadow-[0_0_15px_rgba(255,209,0,0.2)] overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-0.5 bg-black/10" />
-            <span className="text-black font-black text-lg italic tracking-tighter -skew-x-6">Mr. K</span>
-            <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-2 bg-surface rotate-45 border-b border-r border-primary" />
-          </div>
-        </div>
+        <img
+          src="/logo.png"
+          alt="Mr. K Crispy Pata"
+          className="h-10 w-auto object-contain"
+          draggable={false}
+        />
         <div className="flex flex-col">
           <span className="text-white font-black tracking-tighter text-xl leading-none italic uppercase">CRISPY PATA</span>
           <span className="text-primary font-black text-[9px] tracking-[0.2em] uppercase mt-1 opacity-80">ADMINISTRATOR</span>

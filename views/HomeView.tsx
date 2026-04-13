@@ -90,20 +90,15 @@ type StorefrontDetail =
   | { kind: 'promo'; promo: PromoRow };
 
 const BrandLogo = ({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) => {
-  const scale = size === 'sm' ? 'scale-75' : size === 'lg' ? 'scale-125' : 'scale-100';
+  const scale = size === 'sm' ? 'scale-90' : size === 'lg' ? 'scale-110' : 'scale-100';
   return (
     <div className={`flex items-center gap-3 cursor-pointer ${scale} origin-left`}>
-      <div className="relative">
-        <div className="w-12 h-10 bg-[#FFD100] rounded-lg flex items-center justify-center relative shadow-[0_0_20px_rgba(255,209,0,0.3)] overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-black/10" />
-          <span className="text-black font-black text-xl italic tracking-tighter -skew-x-6">Mr. K</span>
-          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-4 h-3 bg-[#0B0B0B] rotate-45 border-b border-r border-[#FFD100]" />
-        </div>
-      </div>
-      <div className="flex flex-col -space-y-1">
-        <span className="text-[#FFD100] font-black text-sm tracking-[0.2em] uppercase leading-none">CRISPY</span>
-        <span className="text-white font-black text-lg tracking-tighter italic leading-none">PATA</span>
-      </div>
+      <img
+        src="/logo.png"
+        alt="Mr. K Crispy Pata"
+        className="h-10 sm:h-11 w-auto object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.55)]"
+        draggable={false}
+      />
     </div>
   );
 };
