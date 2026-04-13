@@ -1,14 +1,6 @@
-import { useEffect, useRef } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+import { useEffect, useMemo, useRef } from 'react';
+import Map, { Marker, NavigationControl, Popup, type MapRef } from 'react-map-gl/mapbox';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 export type BranchMapPoint = {
   id: string;
@@ -32,21 +24,8 @@ type BranchesMapProps = {
 };
 
 /** Metro Manila — used when no branch has valid coordinates */
-const FALLBACK_CENTER: L.LatLngExpression = [14.58, 121.0];
+const FALLBACK_CENTER = { lng: 121.0, lat: 14.58 };
 const FALLBACK_ZOOM = 11;
-
-function branchTooltipHtml(b: BranchMapPoint): string {
-  const lines = [
-    `<div class="branches-map-tip-title">${escapeHtml(b.name)}</div>`,
-    `<div class="branches-map-tip-status">${escapeHtml(b.status)}</div>`,
-    b.addr ? `<div class="branches-map-tip-line">${escapeHtml(b.addr)}</div>` : '',
-    b.time ? `<div class="branches-map-tip-line">${escapeHtml(b.time)}</div>` : '',
-    b.phone ? `<div class="branches-map-tip-line">${escapeHtml(b.phone)}</div>` : '',
-  ]
-    .filter(Boolean)
-    .join('');
-  return `<div class="branches-map-tip">${lines}</div>`;
-}
 
 export function BranchesMap({
   branches,
@@ -55,278 +34,147 @@ export function BranchesMap({
   refreshToken,
   className = '',
 }: BranchesMapProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<L.Map | null>(null);
-  const markersLayerRef = useRef<L.LayerGroup | null>(null);
-  const tilesRef = useRef<L.TileLayer | null>(null);
-  const highlightRef = useRef(onHighlightBranch);
-  highlightRef.current = onHighlightBranch;
-  const branchesRef = useRef<BranchMapPoint[]>(branches);
-  const selectedRef = useRef<string | null>(selectedBranchId);
-  branchesRef.current = branches;
-  selectedRef.current = selectedBranchId;
+  const mapRef = useRef<MapRef | null>(null);
 
-  const renderMap = () => {
-    const map = mapRef.current;
-    const layerGroup = markersLayerRef.current;
-    if (!map || !layerGroup) return;
+  const token = (import.meta as ImportMeta).env?.VITE_MAPBOX_TOKEN as string | undefined;
+  const valid = useMemo(
+    () => branches.filter((b) => Number.isFinite(b.lat) && Number.isFinite(b.lng)),
+    [branches]
+  );
 
-    layerGroup.clearLayers();
+  const selected = useMemo(
+    () => (selectedBranchId ? valid.find((b) => b.id === selectedBranchId) ?? null : null),
+    [valid, selectedBranchId]
+  );
 
-    const currentBranches = branchesRef.current;
-    const currentSelectedId = selectedRef.current;
-    const valid = currentBranches.filter((b) => Number.isFinite(b.lat) && Number.isFinite(b.lng));
-
+  const bounds = useMemo(() => {
+    if (valid.length === 0) return null;
+    let minLng = valid[0].lng;
+    let maxLng = valid[0].lng;
+    let minLat = valid[0].lat;
+    let maxLat = valid[0].lat;
     for (const b of valid) {
-      const selected = b.id === currentSelectedId;
-      const marker = L.circleMarker([b.lat, b.lng], {
-        radius: selected ? 13 : 8,
-        fillColor: '#FFD100',
-        color: '#0B0B0B',
-        weight: selected ? 3 : 2,
-        opacity: 1,
-        fillOpacity: 0.95,
-      });
-
-      marker.bindTooltip(branchTooltipHtml(b), {
-        permanent: false,
-        direction: 'top',
-        sticky: true,
-        opacity: 1,
-        className: 'branches-map-tooltip-wrap',
-        offset: [0, -6],
-      });
-
-      marker.on('click', (e) => {
-        L.DomEvent.stopPropagation(e);
-        highlightRef.current?.(b.id);
-      });
-
-      marker.addTo(layerGroup);
+      minLng = Math.min(minLng, b.lng);
+      maxLng = Math.max(maxLng, b.lng);
+      minLat = Math.min(minLat, b.lat);
+      maxLat = Math.max(maxLat, b.lat);
     }
-
-    if (!map.getContainer().isConnected) return;
-
-    try {
-      map.invalidateSize({ pan: false });
-      // Some browsers/pages can leave the map "grey" after hide/show.
-      // Redraw forces tiles to re-render after size/layout changes.
-      tilesRef.current?.redraw();
-      if (valid.length === 0) {
-        map.setView(FALLBACK_CENTER, FALLBACK_ZOOM);
-        return;
-      }
-
-      const selected = currentSelectedId ? valid.find((br) => br.id === currentSelectedId) : undefined;
-      if (selected) {
-        map.flyTo([selected.lat, selected.lng], 14, { duration: 0.45 });
-        // After animated moves, schedule a refresh in case the container
-        // visibility changed mid-flight.
-        setTimeout(() => {
-          try {
-            map.invalidateSize({ pan: false });
-            tilesRef.current?.redraw();
-          } catch {
-            /* ignore */
-          }
-        }, 200);
-        return;
-      }
-
-      if (valid.length === 1) {
-        map.setView([valid[0].lat, valid[0].lng], 14);
-      } else {
-        const bounds = L.latLngBounds(valid.map((br) => [br.lat, br.lng]));
-        map.fitBounds(bounds, { padding: [48, 48], maxZoom: 13 });
-      }
-      setTimeout(() => {
-        try {
-          map.invalidateSize({ pan: false });
-          tilesRef.current?.redraw();
-        } catch {
-          /* ignore */
-        }
-      }, 120);
-    } catch {
-      /* map may be tearing down */
-    }
-  };
+    return { minLng, minLat, maxLng, maxLat };
+  }, [valid]);
 
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    // Leaflet stores an internal `_leaflet_id` on the container element.
-    // If React unmount/remount happens quickly (or removal throws), Leaflet can
-    // think the container is still initialized and refuse to mount.
-    const clearLeafletContainerId = () => {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const anyEl = el as any;
-        if (anyEl && '_leaflet_id' in anyEl) delete anyEl._leaflet_id;
-      } catch {
-        /* ignore */
-      }
-    };
-    clearLeafletContainerId();
-
-    let cancelled = false;
-
-    const waitForNonZeroSize = async () => {
-      // When navigating between sections, the map container can briefly render
-      // at 0x0 (layout not settled yet). Initializing Leaflet during that window
-      // can lead to a permanently broken map on return.
-      const start = Date.now();
-      while (!cancelled) {
-        const w = el.clientWidth;
-        const h = el.clientHeight;
-        if (w > 0 && h > 0) return;
-        if (Date.now() - start > 5000) return; // don't hang forever
-        await new Promise<void>((r) => requestAnimationFrame(() => r()));
-      }
-    };
-
-    const createMap = () =>
-      L.map(el, {
-        zoomControl: true,
-        scrollWheelZoom: true,
-        attributionControl: true,
-      });
-
-    (async () => {
-      await waitForNonZeroSize();
-      if (cancelled) return;
-      let map: L.Map | null = null;
-      let lastErr: unknown = null;
-      for (let attempt = 0; attempt < 6 && !cancelled; attempt++) {
-        try {
-          // Ensure we start from a clean container each time.
-          el.replaceChildren();
-          clearLeafletContainerId();
-          map = createMap();
-          break;
-        } catch (e) {
-          lastErr = e;
-          // Wait a tick and retry (layout/DOM can still be settling).
-          await new Promise<void>((r) => requestAnimationFrame(() => r()));
-        }
-      }
-      if (!map || cancelled) return;
-
-      mapRef.current = map;
-
-      const tiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 20,
-      });
-      tiles.addTo(map);
-      tilesRef.current = tiles;
-
-      const layerGroup = L.layerGroup().addTo(map);
-      markersLayerRef.current = layerGroup;
-
-      const fixSize = () => {
-        if (mapRef.current && containerRef.current?.isConnected) {
-          map.invalidateSize({ pan: false });
-          tilesRef.current?.redraw();
-        }
-      };
-      // Leaflet often renders blank tiles when mounted while the container is
-      // transitioning between hidden/visible states. Be aggressive up-front.
-      fixSize();
-      requestAnimationFrame(fixSize);
-      setTimeout(fixSize, 60);
-      setTimeout(fixSize, 250);
-
-      const onWindowResize = () => {
-        fixSize();
-        requestAnimationFrame(fixSize);
-      };
-      window.addEventListener('resize', onWindowResize);
-      window.addEventListener('orientationchange', onWindowResize);
-
-      const onVis = () => {
-        if (document.visibilityState === 'visible') {
-          fixSize();
-          requestAnimationFrame(fixSize);
-          setTimeout(fixSize, 120);
-          // Also re-render markers/view in case props changed while hidden.
-          setTimeout(renderMap, 0);
-        }
-      };
-      document.addEventListener('visibilitychange', onVis);
-
-      const ro = new ResizeObserver(fixSize);
-      ro.observe(el);
-
-      // Store cleanup hooks on the map instance so outer cleanup can run even
-      // if init was delayed.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (map as any).__branchesMapCleanup = () => {
-        document.removeEventListener('visibilitychange', onVis);
-        window.removeEventListener('orientationchange', onWindowResize);
-        window.removeEventListener('resize', onWindowResize);
-        ro.disconnect();
-      };
-
-      // First render once map is actually ready.
-      renderMap();
-    })();
-
-    return () => {
-      cancelled = true;
-      const m = mapRef.current;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (m as any)?.__branchesMapCleanup?.();
-      tilesRef.current = null;
-      markersLayerRef.current = null;
-      mapRef.current = null;
-      try {
-        m?.remove();
-      } catch {
-        /* ignore */
-      }
-      clearLeafletContainerId();
-      el.replaceChildren();
-    };
-  }, []);
-
-  useEffect(() => {
-    renderMap();
-  }, [branches, selectedBranchId]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-    // Force-refresh tiles on page entry.
-    try {
-      map.invalidateSize({ pan: false });
-      tilesRef.current?.redraw();
-    } catch {
-      /* ignore */
-    }
-    // One more tick after layout settles.
-    const t = setTimeout(() => {
-      try {
-        map.invalidateSize({ pan: false });
-        tilesRef.current?.redraw();
-        renderMap();
-      } catch {
-        /* ignore */
-      }
-    }, 80);
-    return () => clearTimeout(t);
+    // Resize + re-render on page entry.
+    if (refreshToken == null) return;
+    const m = mapRef.current;
+    if (!m) return;
+    // Mapbox needs resize when container was hidden.
+    setTimeout(() => m.resize(), 0);
+    setTimeout(() => m.resize(), 120);
   }, [refreshToken]);
 
+  useEffect(() => {
+    const m = mapRef.current;
+    if (!m) return;
+    if (selected) {
+      m.flyTo({ center: [selected.lng, selected.lat], zoom: Math.max(m.getZoom(), 13), duration: 450 });
+      return;
+    }
+    if (bounds) {
+      m.fitBounds(
+        [
+          [bounds.minLng, bounds.minLat],
+          [bounds.maxLng, bounds.maxLat],
+        ],
+        { padding: 48, maxZoom: 13, duration: 0 }
+      );
+    } else {
+      m.flyTo({ center: [FALLBACK_CENTER.lng, FALLBACK_CENTER.lat], zoom: FALLBACK_ZOOM, duration: 0 });
+    }
+  }, [selected?.id, bounds?.minLat, bounds?.minLng, bounds?.maxLat, bounds?.maxLng]);
+
+  if (!token) {
+    return (
+      <div
+        className={`branches-map-root ${className}`.trim()}
+        role="application"
+        aria-label="Map of branch locations"
+      >
+        <div className="w-full h-full flex items-center justify-center text-white/50 text-sm font-bold">
+          Mapbox token missing. Set <span className="text-white/70 mx-2">VITE_MAPBOX_TOKEN</span> in your env.
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div
-      ref={containerRef}
-      className={`branches-map-root ${className}`.trim()}
-      role="application"
-      aria-label="Map of branch locations — hover a marker for details"
-      onClick={(e) => e.stopPropagation()}
-    />
+    <div className={`branches-map-root ${className}`.trim()} role="application" aria-label="Map of branch locations">
+      <Map
+        ref={(r) => {
+          mapRef.current = r;
+        }}
+        mapboxAccessToken={token}
+        initialViewState={{
+          longitude: FALLBACK_CENTER.lng,
+          latitude: FALLBACK_CENTER.lat,
+          zoom: FALLBACK_ZOOM,
+        }}
+        mapStyle="mapbox://styles/mapbox/dark-v11"
+        style={{ width: '100%', height: '100%' }}
+        attributionControl
+        onLoad={() => {
+          const m = mapRef.current;
+          if (!m) return;
+          m.resize();
+        }}
+      >
+        <NavigationControl position="bottom-right" />
+        {valid.map((b) => {
+          const isSelected = b.id === selectedBranchId;
+          return (
+            <Marker key={b.id} longitude={b.lng} latitude={b.lat} anchor="center">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onHighlightBranch?.(b.id);
+                }}
+                onMouseEnter={() => {}}
+                className="rounded-full"
+                aria-label={`Select ${b.name}`}
+                style={{
+                  width: isSelected ? 18 : 12,
+                  height: isSelected ? 18 : 12,
+                  background: '#FFD100',
+                  border: isSelected ? '3px solid #0B0B0B' : '2px solid #0B0B0B',
+                  boxShadow: '0 6px 18px rgba(0,0,0,0.45)',
+                }}
+              />
+            </Marker>
+          );
+        })}
+        {/* Lightweight popup when selected */}
+        {selected ? (
+          <Popup
+            longitude={selected.lng}
+            latitude={selected.lat}
+            anchor="top"
+            closeButton={false}
+            closeOnClick={false}
+            offset={18}
+            maxWidth="280px"
+          >
+            <div style={{ minWidth: 220 }}>
+              <div style={{ fontWeight: 900, marginBottom: 6 }}>{selected.name}</div>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#FFD100' }}>
+                {selected.status}
+              </div>
+              {selected.addr ? <div style={{ fontSize: 12, opacity: 0.8, marginTop: 6 }}>{selected.addr}</div> : null}
+              {selected.time ? <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>{selected.time}</div> : null}
+              {selected.phone ? <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>{selected.phone}</div> : null}
+            </div>
+          </Popup>
+        ) : null}
+      </Map>
+    </div>
   );
 }
