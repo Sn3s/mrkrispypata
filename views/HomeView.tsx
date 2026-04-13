@@ -276,6 +276,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onAdminClick }) => {
   const [promoRows, setPromoRows] = useState(FALLBACK_PROMOS);
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [branchesMapRefreshToken, setBranchesMapRefreshToken] = useState(0);
 
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -405,6 +406,12 @@ export const HomeView: React.FC<HomeViewProps> = ({ onAdminClick }) => {
   useEffect(() => {
     loadCatalog();
   }, [loadCatalog]);
+
+  useEffect(() => {
+    if (activeSection === 'branches') {
+      setBranchesMapRefreshToken((x) => x + 1);
+    }
+  }, [activeSection]);
 
   const catalogReloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -586,6 +593,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onAdminClick }) => {
             selectedBranchId={selectedBranchId}
             branches={branches}
             loading={catalogLoading}
+            mapRefreshToken={branchesMapRefreshToken}
           />
         );
       case 'promos':
@@ -1207,6 +1215,7 @@ const BranchesView = ({
   selectedBranchId,
   branches,
   loading,
+  mapRefreshToken,
 }: {
   onBack: () => void;
   onSelectBranch: (id: string) => void;
@@ -1214,6 +1223,7 @@ const BranchesView = ({
   selectedBranchId: string | null;
   branches: StoreBranch[];
   loading: boolean;
+  mapRefreshToken: number;
 }) => (
   <main className="px-5 sm:px-10 lg:px-16 py-8 sm:py-10 space-y-12 sm:space-y-16 max-w-[1600px] mx-auto min-h-screen">
     {loading && <p className="text-white/40 text-sm font-bold">Loading branches…</p>}
@@ -1280,6 +1290,7 @@ const BranchesView = ({
           }))}
           selectedBranchId={selectedBranchId}
           onHighlightBranch={onHighlightBranch}
+          refreshToken={mapRefreshToken}
         />
       </div>
     </div>

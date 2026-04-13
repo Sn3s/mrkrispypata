@@ -26,6 +26,8 @@ type BranchesMapProps = {
   selectedBranchId: string | null;
   /** Sync list highlight when user clicks a dot (does not navigate away). */
   onHighlightBranch?: (id: string) => void;
+  /** Bump to force a refresh when the page becomes visible. */
+  refreshToken?: number;
   className?: string;
 };
 
@@ -50,6 +52,7 @@ export function BranchesMap({
   branches,
   selectedBranchId,
   onHighlightBranch,
+  refreshToken,
   className = '',
 }: BranchesMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -285,6 +288,29 @@ export function BranchesMap({
   useEffect(() => {
     renderMap();
   }, [branches, selectedBranchId]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    // Force-refresh tiles on page entry.
+    try {
+      map.invalidateSize({ pan: false });
+      tilesRef.current?.redraw();
+    } catch {
+      /* ignore */
+    }
+    // One more tick after layout settles.
+    const t = setTimeout(() => {
+      try {
+        map.invalidateSize({ pan: false });
+        tilesRef.current?.redraw();
+        renderMap();
+      } catch {
+        /* ignore */
+      }
+    }, 80);
+    return () => clearTimeout(t);
+  }, [refreshToken]);
 
   return (
     <div
