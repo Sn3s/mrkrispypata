@@ -76,6 +76,22 @@ export function BranchesMap({
     };
     clearLeafletContainerId();
 
+    let cancelled = false;
+
+    const waitForNonZeroSize = async () => {
+      // When navigating between sections, the map container can briefly render
+      // at 0x0 (layout not settled yet). Initializing Leaflet during that window
+      // can lead to a permanently broken map on return.
+      const start = Date.now();
+      while (!cancelled) {
+        const w = el.clientWidth;
+        const h = el.clientHeight;
+        if (w > 0 && h > 0) return;
+        if (Date.now() - start > 1200) return; // don't hang forever
+        await new Promise<void>((r) => requestAnimationFrame(() => r()));
+      }
+    };
+
     const createMap = () =>
       L.map(el, {
         zoomControl: true,
@@ -84,66 +100,80 @@ export function BranchesMap({
       });
 
     let map: L.Map;
-    try {
-      map = createMap();
-    } catch (e) {
-      // One retry after clearing container id.
-      clearLeafletContainerId();
-      map = createMap();
-    }
-
-    mapRef.current = map;
-
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 20,
-    }).addTo(map);
-
-    const layerGroup = L.layerGroup().addTo(map);
-    markersLayerRef.current = layerGroup;
-
-    const fixSize = () => {
-      if (mapRef.current && containerRef.current?.isConnected) {
-        map.invalidateSize();
+    (async () => {
+      await waitForNonZeroSize();
+      if (cancelled) return;
+      try {
+        map = createMap();
+      } catch {
+        // One retry after clearing container id.
+        clearLeafletContainerId();
+        map = createMap();
       }
-    };
-    // Leaflet often renders blank tiles when mounted while the container is
-    // transitioning between hidden/visible states. Be aggressive up-front.
-    fixSize();
-    requestAnimationFrame(fixSize);
-    setTimeout(fixSize, 60);
-    setTimeout(fixSize, 250);
 
-    const onWindowResize = () => {
+      mapRef.current = map;
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20,
+      }).addTo(map);
+
+      const layerGroup = L.layerGroup().addTo(map);
+      markersLayerRef.current = layerGroup;
+
+      const fixSize = () => {
+        if (mapRef.current && containerRef.current?.isConnected) {
+          map.invalidateSize();
+        }
+      };
+      // Leaflet often renders blank tiles when mounted while the container is
+      // transitioning between hidden/visible states. Be aggressive up-front.
       fixSize();
       requestAnimationFrame(fixSize);
-    };
-    window.addEventListener('resize', onWindowResize);
-    window.addEventListener('orientationchange', onWindowResize);
+      setTimeout(fixSize, 60);
+      setTimeout(fixSize, 250);
 
-    const onVis = () => {
-      if (document.visibilityState === 'visible') {
+      const onWindowResize = () => {
         fixSize();
         requestAnimationFrame(fixSize);
-        setTimeout(fixSize, 120);
-      }
-    };
-    document.addEventListener('visibilitychange', onVis);
+      };
+      window.addEventListener('resize', onWindowResize);
+      window.addEventListener('orientationchange', onWindowResize);
 
-    const ro = new ResizeObserver(fixSize);
-    ro.observe(el);
+      const onVis = () => {
+        if (document.visibilityState === 'visible') {
+          fixSize();
+          requestAnimationFrame(fixSize);
+          setTimeout(fixSize, 120);
+        }
+      };
+      document.addEventListener('visibilitychange', onVis);
+
+      const ro = new ResizeObserver(fixSize);
+      ro.observe(el);
+
+      // Store cleanup hooks on the map instance so outer cleanup can run even
+      // if init was delayed.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (map as any).__branchesMapCleanup = () => {
+        document.removeEventListener('visibilitychange', onVis);
+        window.removeEventListener('orientationchange', onWindowResize);
+        window.removeEventListener('resize', onWindowResize);
+        ro.disconnect();
+      };
+    })();
 
     return () => {
-      document.removeEventListener('visibilitychange', onVis);
-      window.removeEventListener('orientationchange', onWindowResize);
-      window.removeEventListener('resize', onWindowResize);
-      ro.disconnect();
+      cancelled = true;
+      const m = mapRef.current;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (m as any)?.__branchesMapCleanup?.();
       markersLayerRef.current = null;
       mapRef.current = null;
       try {
-        map.remove();
+        m?.remove();
       } catch {
         /* ignore */
       }
