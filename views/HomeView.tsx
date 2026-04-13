@@ -1277,6 +1277,7 @@ const BranchesView = ({
       </div>
       <div className="lg:col-span-8 h-[min(62vh,700px)] sm:h-[min(70vh,700px)] min-h-[320px] rounded-[28px] sm:rounded-[48px] overflow-hidden border border-white/10 shadow-2xl bg-[#0e0e0e] relative z-0 isolate">
         <BranchesMap
+          key={`branches-map-${mapRefreshToken}`}
           className="h-full w-full"
           branches={branches.map((b) => ({
             id: b.id,
