@@ -55,6 +55,7 @@ export function BranchesMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
+  const tilesRef = useRef<L.TileLayer | null>(null);
   const highlightRef = useRef(onHighlightBranch);
   highlightRef.current = onHighlightBranch;
   const branchesRef = useRef<BranchMapPoint[]>(branches);
@@ -104,7 +105,10 @@ export function BranchesMap({
     if (!map.getContainer().isConnected) return;
 
     try {
-      map.invalidateSize();
+      map.invalidateSize({ pan: false });
+      // Some browsers/pages can leave the map "grey" after hide/show.
+      // Redraw forces tiles to re-render after size/layout changes.
+      tilesRef.current?.redraw();
       if (valid.length === 0) {
         map.setView(FALLBACK_CENTER, FALLBACK_ZOOM);
         return;
@@ -113,6 +117,16 @@ export function BranchesMap({
       const selected = currentSelectedId ? valid.find((br) => br.id === currentSelectedId) : undefined;
       if (selected) {
         map.flyTo([selected.lat, selected.lng], 14, { duration: 0.45 });
+        // After animated moves, schedule a refresh in case the container
+        // visibility changed mid-flight.
+        setTimeout(() => {
+          try {
+            map.invalidateSize({ pan: false });
+            tilesRef.current?.redraw();
+          } catch {
+            /* ignore */
+          }
+        }, 200);
         return;
       }
 
@@ -122,6 +136,14 @@ export function BranchesMap({
         const bounds = L.latLngBounds(valid.map((br) => [br.lat, br.lng]));
         map.fitBounds(bounds, { padding: [48, 48], maxZoom: 13 });
       }
+      setTimeout(() => {
+        try {
+          map.invalidateSize({ pan: false });
+          tilesRef.current?.redraw();
+        } catch {
+          /* ignore */
+        }
+      }, 120);
     } catch {
       /* map may be tearing down */
     }
@@ -182,19 +204,22 @@ export function BranchesMap({
 
       mapRef.current = map;
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      const tiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution:
           '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
         subdomains: 'abcd',
         maxZoom: 20,
-      }).addTo(map);
+      });
+      tiles.addTo(map);
+      tilesRef.current = tiles;
 
       const layerGroup = L.layerGroup().addTo(map);
       markersLayerRef.current = layerGroup;
 
       const fixSize = () => {
         if (mapRef.current && containerRef.current?.isConnected) {
-          map.invalidateSize();
+          map.invalidateSize({ pan: false });
+          tilesRef.current?.redraw();
         }
       };
       // Leaflet often renders blank tiles when mounted while the container is
@@ -216,6 +241,8 @@ export function BranchesMap({
           fixSize();
           requestAnimationFrame(fixSize);
           setTimeout(fixSize, 120);
+          // Also re-render markers/view in case props changed while hidden.
+          setTimeout(renderMap, 0);
         }
       };
       document.addEventListener('visibilitychange', onVis);
@@ -242,6 +269,7 @@ export function BranchesMap({
       const m = mapRef.current;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (m as any)?.__branchesMapCleanup?.();
+      tilesRef.current = null;
       markersLayerRef.current = null;
       mapRef.current = null;
       try {
