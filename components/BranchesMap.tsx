@@ -57,6 +57,75 @@ export function BranchesMap({
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const highlightRef = useRef(onHighlightBranch);
   highlightRef.current = onHighlightBranch;
+  const branchesRef = useRef<BranchMapPoint[]>(branches);
+  const selectedRef = useRef<string | null>(selectedBranchId);
+  branchesRef.current = branches;
+  selectedRef.current = selectedBranchId;
+
+  const renderMap = () => {
+    const map = mapRef.current;
+    const layerGroup = markersLayerRef.current;
+    if (!map || !layerGroup) return;
+
+    layerGroup.clearLayers();
+
+    const currentBranches = branchesRef.current;
+    const currentSelectedId = selectedRef.current;
+    const valid = currentBranches.filter((b) => Number.isFinite(b.lat) && Number.isFinite(b.lng));
+
+    for (const b of valid) {
+      const selected = b.id === currentSelectedId;
+      const marker = L.circleMarker([b.lat, b.lng], {
+        radius: selected ? 13 : 8,
+        fillColor: '#FFD100',
+        color: '#0B0B0B',
+        weight: selected ? 3 : 2,
+        opacity: 1,
+        fillOpacity: 0.95,
+      });
+
+      marker.bindTooltip(branchTooltipHtml(b), {
+        permanent: false,
+        direction: 'top',
+        sticky: true,
+        opacity: 1,
+        className: 'branches-map-tooltip-wrap',
+        offset: [0, -6],
+      });
+
+      marker.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        highlightRef.current?.(b.id);
+      });
+
+      marker.addTo(layerGroup);
+    }
+
+    if (!map.getContainer().isConnected) return;
+
+    try {
+      map.invalidateSize();
+      if (valid.length === 0) {
+        map.setView(FALLBACK_CENTER, FALLBACK_ZOOM);
+        return;
+      }
+
+      const selected = currentSelectedId ? valid.find((br) => br.id === currentSelectedId) : undefined;
+      if (selected) {
+        map.flyTo([selected.lat, selected.lng], 14, { duration: 0.45 });
+        return;
+      }
+
+      if (valid.length === 1) {
+        map.setView([valid[0].lat, valid[0].lng], 14);
+      } else {
+        const bounds = L.latLngBounds(valid.map((br) => [br.lat, br.lng]));
+        map.fitBounds(bounds, { padding: [48, 48], maxZoom: 13 });
+      }
+    } catch {
+      /* map may be tearing down */
+    }
+  };
 
   useEffect(() => {
     const el = containerRef.current;
@@ -163,6 +232,9 @@ export function BranchesMap({
         window.removeEventListener('resize', onWindowResize);
         ro.disconnect();
       };
+
+      // First render once map is actually ready.
+      renderMap();
     })();
 
     return () => {
@@ -183,67 +255,7 @@ export function BranchesMap({
   }, []);
 
   useEffect(() => {
-    const map = mapRef.current;
-    const layerGroup = markersLayerRef.current;
-    if (!map || !layerGroup) return;
-
-    layerGroup.clearLayers();
-
-    const valid = branches.filter((b) => Number.isFinite(b.lat) && Number.isFinite(b.lng));
-
-    for (const b of valid) {
-      const selected = b.id === selectedBranchId;
-      const marker = L.circleMarker([b.lat, b.lng], {
-        radius: selected ? 13 : 8,
-        fillColor: '#FFD100',
-        color: '#0B0B0B',
-        weight: selected ? 3 : 2,
-        opacity: 1,
-        fillOpacity: 0.95,
-      });
-
-      marker.bindTooltip(branchTooltipHtml(b), {
-        permanent: false,
-        direction: 'top',
-        sticky: true,
-        opacity: 1,
-        className: 'branches-map-tooltip-wrap',
-        offset: [0, -6],
-      });
-
-      marker.on('click', (e) => {
-        L.DomEvent.stopPropagation(e);
-        highlightRef.current?.(b.id);
-      });
-
-      marker.addTo(layerGroup);
-    }
-
-    if (!map.getContainer().isConnected) return;
-
-    try {
-      // Ensure map has correct size before view operations.
-      map.invalidateSize();
-      if (valid.length === 0) {
-        map.setView(FALLBACK_CENTER, FALLBACK_ZOOM);
-        return;
-      }
-
-      const selected = selectedBranchId ? valid.find((br) => br.id === selectedBranchId) : undefined;
-      if (selected) {
-        map.flyTo([selected.lat, selected.lng], 14, { duration: 0.45 });
-        return;
-      }
-
-      if (valid.length === 1) {
-        map.setView([valid[0].lat, valid[0].lng], 14);
-      } else {
-        const bounds = L.latLngBounds(valid.map((br) => [br.lat, br.lng]));
-        map.fitBounds(bounds, { padding: [48, 48], maxZoom: 13 });
-      }
-    } catch {
-      /* map may be tearing down */
-    }
+    renderMap();
   }, [branches, selectedBranchId]);
 
   return (
