@@ -62,11 +62,35 @@ export function BranchesMap({
     const el = containerRef.current;
     if (!el) return;
 
-    const map = L.map(el, {
-      zoomControl: true,
-      scrollWheelZoom: true,
-      attributionControl: true,
-    });
+    // Leaflet stores an internal `_leaflet_id` on the container element.
+    // If React unmount/remount happens quickly (or removal throws), Leaflet can
+    // think the container is still initialized and refuse to mount.
+    const clearLeafletContainerId = () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const anyEl = el as any;
+        if (anyEl && '_leaflet_id' in anyEl) delete anyEl._leaflet_id;
+      } catch {
+        /* ignore */
+      }
+    };
+    clearLeafletContainerId();
+
+    const createMap = () =>
+      L.map(el, {
+        zoomControl: true,
+        scrollWheelZoom: true,
+        attributionControl: true,
+      });
+
+    let map: L.Map;
+    try {
+      map = createMap();
+    } catch (e) {
+      // One retry after clearing container id.
+      clearLeafletContainerId();
+      map = createMap();
+    }
 
     mapRef.current = map;
 
@@ -123,6 +147,7 @@ export function BranchesMap({
       } catch {
         /* ignore */
       }
+      clearLeafletContainerId();
       el.replaceChildren();
     };
   }, []);
