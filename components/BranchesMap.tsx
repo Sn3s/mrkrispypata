@@ -85,12 +85,36 @@ export function BranchesMap({
         map.invalidateSize();
       }
     };
+    // Leaflet often renders blank tiles when mounted while the container is
+    // transitioning between hidden/visible states. Be aggressive up-front.
     fixSize();
     requestAnimationFrame(fixSize);
+    setTimeout(fixSize, 60);
+    setTimeout(fixSize, 250);
+
+    const onWindowResize = () => {
+      fixSize();
+      requestAnimationFrame(fixSize);
+    };
+    window.addEventListener('resize', onWindowResize);
+    window.addEventListener('orientationchange', onWindowResize);
+
+    const onVis = () => {
+      if (document.visibilityState === 'visible') {
+        fixSize();
+        requestAnimationFrame(fixSize);
+        setTimeout(fixSize, 120);
+      }
+    };
+    document.addEventListener('visibilitychange', onVis);
+
     const ro = new ResizeObserver(fixSize);
     ro.observe(el);
 
     return () => {
+      document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener('orientationchange', onWindowResize);
+      window.removeEventListener('resize', onWindowResize);
       ro.disconnect();
       markersLayerRef.current = null;
       mapRef.current = null;
@@ -143,6 +167,8 @@ export function BranchesMap({
     if (!map.getContainer().isConnected) return;
 
     try {
+      // Ensure map has correct size before view operations.
+      map.invalidateSize();
       if (valid.length === 0) {
         map.setView(FALLBACK_CENTER, FALLBACK_ZOOM);
         return;
