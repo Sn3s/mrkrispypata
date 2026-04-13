@@ -181,7 +181,7 @@ export function BranchesMap({
         const w = el.clientWidth;
         const h = el.clientHeight;
         if (w > 0 && h > 0) return;
-        if (Date.now() - start > 1200) return; // don't hang forever
+        if (Date.now() - start > 5000) return; // don't hang forever
         await new Promise<void>((r) => requestAnimationFrame(() => r()));
       }
     };
@@ -193,17 +193,25 @@ export function BranchesMap({
         attributionControl: true,
       });
 
-    let map: L.Map;
     (async () => {
       await waitForNonZeroSize();
       if (cancelled) return;
-      try {
-        map = createMap();
-      } catch {
-        // One retry after clearing container id.
-        clearLeafletContainerId();
-        map = createMap();
+      let map: L.Map | null = null;
+      let lastErr: unknown = null;
+      for (let attempt = 0; attempt < 6 && !cancelled; attempt++) {
+        try {
+          // Ensure we start from a clean container each time.
+          el.replaceChildren();
+          clearLeafletContainerId();
+          map = createMap();
+          break;
+        } catch (e) {
+          lastErr = e;
+          // Wait a tick and retry (layout/DOM can still be settling).
+          await new Promise<void>((r) => requestAnimationFrame(() => r()));
+        }
       }
+      if (!map || cancelled) return;
 
       mapRef.current = map;
 
