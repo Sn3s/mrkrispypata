@@ -16,12 +16,16 @@ export type BranchMapPoint = {
   lat: number;
   lng: number;
   status: string;
+  addr: string;
+  time: string;
+  phone: string;
 };
 
 type BranchesMapProps = {
   branches: BranchMapPoint[];
   selectedBranchId: string | null;
-  onSelectBranch: (id: string) => void;
+  /** Sync list highlight when user clicks a dot (does not navigate away). */
+  onHighlightBranch?: (id: string) => void;
   className?: string;
 };
 
@@ -29,12 +33,30 @@ type BranchesMapProps = {
 const FALLBACK_CENTER: L.LatLngExpression = [14.58, 121.0];
 const FALLBACK_ZOOM = 11;
 
-export function BranchesMap({ branches, selectedBranchId, onSelectBranch, className = '' }: BranchesMapProps) {
+function branchTooltipHtml(b: BranchMapPoint): string {
+  const lines = [
+    `<div class="branches-map-tip-title">${escapeHtml(b.name)}</div>`,
+    `<div class="branches-map-tip-status">${escapeHtml(b.status)}</div>`,
+    b.addr ? `<div class="branches-map-tip-line">${escapeHtml(b.addr)}</div>` : '',
+    b.time ? `<div class="branches-map-tip-line">${escapeHtml(b.time)}</div>` : '',
+    b.phone ? `<div class="branches-map-tip-line">${escapeHtml(b.phone)}</div>` : '',
+  ]
+    .filter(Boolean)
+    .join('');
+  return `<div class="branches-map-tip">${lines}</div>`;
+}
+
+export function BranchesMap({
+  branches,
+  selectedBranchId,
+  onHighlightBranch,
+  className = '',
+}: BranchesMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
-  const selectRef = useRef(onSelectBranch);
-  selectRef.current = onSelectBranch;
+  const highlightRef = useRef(onHighlightBranch);
+  highlightRef.current = onHighlightBranch;
 
   useEffect(() => {
     const el = containerRef.current;
@@ -58,7 +80,11 @@ export function BranchesMap({ branches, selectedBranchId, onSelectBranch, classN
     const layerGroup = L.layerGroup().addTo(map);
     markersLayerRef.current = layerGroup;
 
-    const fixSize = () => map.invalidateSize();
+    const fixSize = () => {
+      if (mapRef.current && containerRef.current?.isConnected) {
+        map.invalidateSize();
+      }
+    };
     fixSize();
     requestAnimationFrame(fixSize);
     const ro = new ResizeObserver(fixSize);
@@ -67,8 +93,13 @@ export function BranchesMap({ branches, selectedBranchId, onSelectBranch, classN
     return () => {
       ro.disconnect();
       markersLayerRef.current = null;
-      map.remove();
       mapRef.current = null;
+      try {
+        map.remove();
+      } catch {
+        /* ignore */
+      }
+      el.replaceChildren();
     };
   }, []);
 
@@ -92,34 +123,45 @@ export function BranchesMap({ branches, selectedBranchId, onSelectBranch, classN
         fillOpacity: 0.95,
       });
 
-      marker.bindPopup(
-        `<div class="branches-map-popup-inner"><strong>${escapeHtml(b.name)}</strong><br/><span style="opacity:0.75;font-size:12px">${escapeHtml(b.status)}</span></div>`,
-        { className: 'branches-map-popup', closeButton: true }
-      );
+      marker.bindTooltip(branchTooltipHtml(b), {
+        permanent: false,
+        direction: 'top',
+        sticky: true,
+        opacity: 1,
+        className: 'branches-map-tooltip-wrap',
+        offset: [0, -6],
+      });
 
-      marker.on('click', () => {
-        selectRef.current(b.id);
+      marker.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        highlightRef.current?.(b.id);
       });
 
       marker.addTo(layerGroup);
     }
 
-    if (valid.length === 0) {
-      map.setView(FALLBACK_CENTER, FALLBACK_ZOOM);
-      return;
-    }
+    if (!map.getContainer().isConnected) return;
 
-    const selected = selectedBranchId ? valid.find((b) => b.id === selectedBranchId) : undefined;
-    if (selected) {
-      map.flyTo([selected.lat, selected.lng], 14, { duration: 0.45 });
-      return;
-    }
+    try {
+      if (valid.length === 0) {
+        map.setView(FALLBACK_CENTER, FALLBACK_ZOOM);
+        return;
+      }
 
-    if (valid.length === 1) {
-      map.setView([valid[0].lat, valid[0].lng], 14);
-    } else {
-      const bounds = L.latLngBounds(valid.map((b) => [b.lat, b.lng]));
-      map.fitBounds(bounds, { padding: [48, 48], maxZoom: 13 });
+      const selected = selectedBranchId ? valid.find((br) => br.id === selectedBranchId) : undefined;
+      if (selected) {
+        map.flyTo([selected.lat, selected.lng], 14, { duration: 0.45 });
+        return;
+      }
+
+      if (valid.length === 1) {
+        map.setView([valid[0].lat, valid[0].lng], 14);
+      } else {
+        const bounds = L.latLngBounds(valid.map((br) => [br.lat, br.lng]));
+        map.fitBounds(bounds, { padding: [48, 48], maxZoom: 13 });
+      }
+    } catch {
+      /* map may be tearing down */
     }
   }, [branches, selectedBranchId]);
 
@@ -128,7 +170,8 @@ export function BranchesMap({ branches, selectedBranchId, onSelectBranch, classN
       ref={containerRef}
       className={`branches-map-root ${className}`.trim()}
       role="application"
-      aria-label="Interactive map of branch locations"
+      aria-label="Map of branch locations — hover a marker for details"
+      onClick={(e) => e.stopPropagation()}
     />
   );
 }

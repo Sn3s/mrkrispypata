@@ -464,10 +464,10 @@ export const AdminView: React.FC<AdminViewProps> = ({ onLogout }) => {
     <div className="min-h-screen bg-background text-white flex">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <main className="flex-1 ml-[260px] flex flex-col min-w-0">
+      <main className="flex-1 ml-0 lg:ml-[280px] flex flex-col min-w-0">
         <Header onHomeClick={handleSignOut} />
 
-        <div className="p-8 space-y-8 max-w-[1600px]">
+        <div className="p-4 sm:p-8 space-y-8 max-w-[1600px]">
           <div className="flex items-end justify-between">
             <div className="space-y-1">
               <h1 className="text-4xl font-extrabold tracking-tight capitalize">{activeTab}</h1>

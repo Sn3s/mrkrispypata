@@ -87,6 +87,47 @@
         line-height: 1.45;
         font-size: 14px;
       }
+      .branches-map-tooltip-wrap.leaflet-tooltip {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        max-width: min(280px, 90vw);
+      }
+      .branches-map-tooltip-wrap .leaflet-tooltip-content {
+        margin: 0;
+        padding: 0;
+      }
+      .branches-map-tip {
+        background: #161616;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 14px;
+        padding: 12px 14px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+        color: #e5e5e5;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      .branches-map-tip-title {
+        font-weight: 900;
+        color: #fff;
+        font-size: 15px;
+        margin-bottom: 6px;
+        letter-spacing: -0.02em;
+      }
+      .branches-map-tip-status {
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: #ffd100;
+        margin-bottom: 8px;
+      }
+      .branches-map-tip-line {
+        color: rgba(255, 255, 255, 0.55);
+        font-size: 12px;
+        margin-top: 4px;
+      }
     </style>
   <script type="importmap">
 {

@@ -582,6 +582,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onAdminClick }) => {
               setSelectedBranchId(id);
               setActiveSection('menu');
             }}
+            onHighlightBranch={setSelectedBranchId}
             selectedBranchId={selectedBranchId}
             branches={branches}
             loading={catalogLoading}
@@ -627,7 +628,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onAdminClick }) => {
           </button>
         </div>
       )}
-      <nav className="h-24 flex items-center justify-between px-16 sticky top-0 bg-[#0B0B0B]/90 backdrop-blur-md z-[100] border-b border-white/5">
+      <nav className="h-20 sm:h-24 flex items-center justify-between px-5 sm:px-10 lg:px-16 sticky top-0 bg-[#0B0B0B]/90 backdrop-blur-md z-[100] border-b border-white/5">
         <div onClick={() => setActiveSection('home')}>
           <BrandLogo />
         </div>
@@ -692,13 +693,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ onAdminClick }) => {
       />
 
       {isBranchModalOpen && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center px-6">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center px-4 sm:px-6">
           <div className="absolute inset-0 bg-black/90 backdrop-blur-2xl" onClick={() => setIsBranchModalOpen(false)} />
           <div className="relative w-full max-w-2xl bg-[#111111] rounded-[48px] border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div className="p-12 space-y-10">
+            <div className="p-6 sm:p-10 lg:p-12 space-y-8 sm:space-y-10">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <h3 className="text-4xl font-black italic tracking-tight">Confirm Pickup Store</h3>
+                  <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black italic tracking-tight">Confirm Pickup Store</h3>
                   <p className="text-white/40 font-bold">Please select where you will pick up your order.</p>
                 </div>
                 <button
@@ -713,7 +714,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onAdminClick }) => {
                 <button
                   onClick={findClosestBranch}
                   disabled={isLocating}
-                  className="w-full py-8 bg-[#FFD100] text-black rounded-[32px] font-black uppercase text-base tracking-[0.25em] flex items-center justify-center gap-4 hover:scale-[1.02] active:scale-95 transition-all shadow-2xl group disabled:opacity-50"
+                  className="w-full py-6 sm:py-8 bg-[#FFD100] text-black rounded-[32px] font-black uppercase text-sm sm:text-base tracking-[0.22em] sm:tracking-[0.25em] flex items-center justify-center gap-4 hover:scale-[1.02] active:scale-95 transition-all shadow-2xl group disabled:opacity-50"
                 >
                   {isLocating ? (
                     <>
@@ -732,15 +733,15 @@ export const HomeView: React.FC<HomeViewProps> = ({ onAdminClick }) => {
                   <div className="flex-grow border-t border-white/5"></div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[min(55vh,350px)] overflow-y-auto pr-2 custom-scrollbar">
                   {branches.map((b) => (
                     <button
                       key={b.id}
                       onClick={() => setSelectedBranchId(b.id)}
-                      className={`p-8 rounded-[40px] border text-left transition-all relative group ${selectedBranchId === b.id ? 'border-[#FFD100] bg-[#FFD100]/5 ring-2 ring-[#FFD100]/10' : 'border-white/5 bg-white/5 hover:border-white/20'}`}
+                      className={`p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] border text-left transition-all relative group ${selectedBranchId === b.id ? 'border-[#FFD100] bg-[#FFD100]/5 ring-2 ring-[#FFD100]/10' : 'border-white/5 bg-white/5 hover:border-white/20'}`}
                     >
                       <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-black text-2xl tracking-tighter">{b.name}</h4>
+                        <h4 className="font-black text-xl sm:text-2xl tracking-tighter">{b.name}</h4>
                         {selectedBranchId === b.id && <CheckCircle2 className="w-6 h-6 text-[#FFD100]" />}
                       </div>
                       <p className="text-sm text-white/40 font-medium mb-6 line-clamp-1">{b.addr}</p>
@@ -777,7 +778,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onAdminClick }) => {
                     if (isCartOpen) void processOrder();
                   }}
                   disabled={orderSubmitting}
-                  className={`w-full sm:w-auto px-16 py-6 rounded-3xl font-black uppercase text-sm tracking-[0.2em] shadow-2xl transition-all ${selectedBranchId ? 'bg-white text-black hover:scale-105 active:scale-95' : 'bg-white/5 text-white/20 cursor-not-allowed'}`}
+                  className={`w-full sm:w-auto px-8 sm:px-12 lg:px-16 py-5 sm:py-6 rounded-3xl font-black uppercase text-xs sm:text-sm tracking-[0.18em] sm:tracking-[0.2em] shadow-2xl transition-all ${selectedBranchId ? 'bg-white text-black hover:scale-105 active:scale-95' : 'bg-white/5 text-white/20 cursor-not-allowed'}`}
                 >
                   {orderSubmitting ? 'Placing…' : 'Confirm & Place Order'}
                 </button>
@@ -897,13 +898,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ onAdminClick }) => {
         </div>
       )}
 
-      <footer className="mt-32 border-t border-white/5 bg-black py-20 px-16">
+      <footer className="mt-24 sm:mt-32 border-t border-white/5 bg-black py-16 sm:py-20 px-5 sm:px-10 lg:px-16">
         <div className="max-w-[1600px] mx-auto space-y-16">
           <div className="flex flex-col md:flex-row items-center justify-between gap-12">
             <div className="flex items-center gap-4">
               <BrandLogo size="lg" />
             </div>
-            <div className="flex items-center gap-12 text-white/50 font-bold text-md">
+            <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 text-white/50 font-bold text-md">
               <a href="#" className="hover:text-[#FFD100] transition-colors">
                 Privacy Policy
               </a>
@@ -965,29 +966,31 @@ const LandingContent = ({
   promos: PromoRow[];
   loading: boolean;
 }) => (
-  <main className="px-16 py-10 space-y-16 max-w-[1600px] mx-auto">
+  <main className="px-5 sm:px-10 lg:px-16 py-8 sm:py-10 space-y-12 sm:space-y-16 max-w-[1600px] mx-auto">
     {loading && <p className="text-white/40 text-sm font-bold">Loading catalog…</p>}
     <section className="flex flex-col gap-8">
-      <div className="relative rounded-[48px] overflow-hidden group shadow-2xl h-[560px]">
+      <div className="relative rounded-[28px] sm:rounded-[48px] overflow-hidden group shadow-2xl h-[440px] sm:h-[520px] lg:h-[560px]">
         <img
           src="https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&q=80&w=1600"
           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
           alt="Original Mr. K's Crispy Pata"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/30 to-transparent flex flex-col justify-center px-20">
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/30 to-transparent flex flex-col justify-center px-6 sm:px-12 lg:px-20">
           <span className="bg-[#FFD100] text-black px-4 py-1.5 rounded-lg text-[12px] font-black uppercase tracking-[0.25em] w-fit mb-8 shadow-lg">
             Hot Offer
           </span>
-          <h1 className="text-white text-8xl font-extrabold tracking-tighter leading-[0.85] mb-4">The Golden Standard</h1>
-          <h2 className="text-[#FFD100] text-7xl font-extrabold italic tracking-tighter mb-10 drop-shadow-lg leading-none">
+          <h1 className="text-white text-4xl sm:text-6xl lg:text-8xl font-extrabold tracking-tighter leading-[0.95] sm:leading-[0.88] mb-3 sm:mb-4">
+            The Golden Standard
+          </h1>
+          <h2 className="text-[#FFD100] text-3xl sm:text-5xl lg:text-7xl font-extrabold italic tracking-tighter mb-7 sm:mb-10 drop-shadow-lg leading-none">
             Family Bundles ₱999
           </h2>
-          <p className="text-white/80 max-w-lg text-xl leading-relaxed mb-12 font-medium">
+          <p className="text-white/80 max-w-lg text-base sm:text-lg lg:text-xl leading-relaxed mb-8 sm:mb-12 font-medium">
             Taste the heritage in every crunch. Our signature pork knuckle, deep-fried to perfection.
           </p>
           <button
             onClick={() => onNavTo('menu')}
-            className="bg-white text-black px-12 py-5 rounded-2xl font-black text-xl flex items-center gap-4 w-fit hover:bg-[#FFD100] transition-all group shadow-2xl"
+            className="bg-white text-black px-8 sm:px-10 lg:px-12 py-4 sm:py-5 rounded-2xl font-black text-base sm:text-lg lg:text-xl flex items-center gap-4 w-fit hover:bg-[#FFD100] transition-all group shadow-2xl"
           >
             Order Now <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
           </button>
@@ -995,10 +998,12 @@ const LandingContent = ({
       </div>
     </section>
 
-    <section className="bg-[#FFD100] rounded-[48px] p-12 flex flex-col xl:flex-row items-center justify-between gap-10 shadow-2xl">
+    <section className="bg-[#FFD100] rounded-[28px] sm:rounded-[48px] p-6 sm:p-10 lg:p-12 flex flex-col xl:flex-row items-center justify-between gap-8 sm:gap-10 shadow-2xl">
       <div className="space-y-3">
-        <h2 className="text-black text-5xl font-extrabold tracking-tighter">Hungry for Crispy Pata?</h2>
-        <p className="text-black/70 text-xl font-bold">Choose your city to find the nearest branch and satisfy your cravings.</p>
+        <h2 className="text-black text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tighter">Hungry for Crispy Pata?</h2>
+        <p className="text-black/70 text-base sm:text-lg lg:text-xl font-bold">
+          Choose your city to find the nearest branch and satisfy your cravings.
+        </p>
       </div>
       <div className="flex flex-col sm:flex-row items-end gap-6 w-full xl:w-auto">
         <div className="space-y-3 w-full sm:w-80">
@@ -1007,7 +1012,7 @@ const LandingContent = ({
             onClick={() => onNavTo('branches')}
             className="h-16 bg-black/95 rounded-[24px] flex items-center justify-between px-8 text-white cursor-pointer group hover:bg-black transition-colors border border-white/5"
           >
-            <span className="font-extrabold text-lg">{selectedBranchLabel || 'Select City'}</span>
+            <span className="font-extrabold text-base sm:text-lg truncate">{selectedBranchLabel || 'Select City'}</span>
             <ChevronDown className="w-6 h-6 text-[#FFD100]" />
           </div>
         </div>
@@ -1021,12 +1026,12 @@ const LandingContent = ({
       </div>
     </section>
 
-    <section className="space-y-12">
+    <section className="space-y-10 sm:space-y-12">
       <div className="flex items-center justify-between">
-        <h2 className="text-white text-5xl font-extrabold tracking-tighter">Current Promos</h2>
+        <h2 className="text-white text-3xl sm:text-5xl font-extrabold tracking-tighter">Current Promos</h2>
         <button
           onClick={() => onNavTo('promos')}
-          className="flex items-center gap-3 text-[#FFD100] font-black text-lg hover:underline group"
+          className="flex items-center gap-3 text-[#FFD100] font-black text-sm sm:text-lg hover:underline group"
         >
           View All Offers <ExternalLink className="w-5 h-5 group-hover:scale-110 transition-transform" />
         </button>
@@ -1095,7 +1100,7 @@ const MenuView = ({
   }, [items, q]);
 
   return (
-    <main className="px-16 py-10 space-y-16 max-w-[1600px] mx-auto min-h-screen">
+    <main className="px-5 sm:px-10 lg:px-16 py-8 sm:py-10 space-y-12 sm:space-y-16 max-w-[1600px] mx-auto min-h-screen">
       {loading && <p className="text-white/40 text-sm font-bold">Loading menu…</p>}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8">
         <div className="space-y-2">
@@ -1106,14 +1111,14 @@ const MenuView = ({
             <ArrowLeft className="w-4 h-4" /> Back Home
           </button>
           <div className="flex items-center gap-4">
-            <h2 className="text-white text-6xl font-extrabold tracking-tighter">Our Menu</h2>
+            <h2 className="text-white text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tighter">Our Menu</h2>
             {!selectedBranchName && (
               <span className="bg-white/5 border border-white/10 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
                 Branch selected later
               </span>
             )}
           </div>
-          <p className="text-white/50 text-xl font-medium">Explore the crunchiest heritage of Mr. K's kitchen.</p>
+          <p className="text-white/50 text-base sm:text-xl font-medium">Explore the crunchiest heritage of Mr. K's kitchen.</p>
         </div>
         <div className="relative w-full max-w-md xl:w-96 shrink-0">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/30 w-5 h-5" />
@@ -1198,17 +1203,19 @@ const MenuView = ({
 const BranchesView = ({
   onBack,
   onSelectBranch,
+  onHighlightBranch,
   selectedBranchId,
   branches,
   loading,
 }: {
   onBack: () => void;
   onSelectBranch: (id: string) => void;
+  onHighlightBranch: (id: string) => void;
   selectedBranchId: string | null;
   branches: StoreBranch[];
   loading: boolean;
 }) => (
-  <main className="px-16 py-10 space-y-16 max-w-[1600px] mx-auto min-h-screen">
+  <main className="px-5 sm:px-10 lg:px-16 py-8 sm:py-10 space-y-12 sm:space-y-16 max-w-[1600px] mx-auto min-h-screen">
     {loading && <p className="text-white/40 text-sm font-bold">Loading branches…</p>}
     <div className="space-y-2">
       <button
@@ -1217,19 +1224,19 @@ const BranchesView = ({
       >
         <ArrowLeft className="w-4 h-4" /> Back Home
       </button>
-      <h2 className="text-white text-6xl font-extrabold tracking-tighter">Our Branches</h2>
-      <p className="text-white/50 text-xl font-medium">Select a branch to start your order.</p>
+      <h2 className="text-white text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tighter">Our Branches</h2>
+      <p className="text-white/50 text-base sm:text-xl font-medium">Select a branch to start your order.</p>
     </div>
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-      <div className="lg:col-span-4 space-y-6 overflow-y-auto max-h-[800px] pr-4 scrollbar-hide">
+      <div className="lg:col-span-4 space-y-6 overflow-y-auto max-h-[min(70vh,800px)] pr-0 sm:pr-4 scrollbar-hide">
         {branches.map((b) => (
           <div
             key={b.id}
             onClick={() => onSelectBranch(b.id)}
-            className={`bg-[#161616] p-8 rounded-[40px] border transition-all group cursor-pointer ${selectedBranchId === b.id ? 'border-[#FFD100] ring-2 ring-[#FFD100]/20' : 'border-white/5 hover:border-[#FFD100]/50'}`}
+            className={`bg-[#161616] p-6 sm:p-8 rounded-[28px] sm:rounded-[40px] border transition-all group cursor-pointer ${selectedBranchId === b.id ? 'border-[#FFD100] ring-2 ring-[#FFD100]/20' : 'border-white/5 hover:border-[#FFD100]/50'}`}
           >
             <div className="flex items-center justify-between mb-6">
-              <h4 className="text-2xl font-black">{b.name}</h4>
+              <h4 className="text-xl sm:text-2xl font-black">{b.name}</h4>
               <div
                 className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${b.status === 'Open Now' ? 'bg-success/10 text-success border border-success/20' : 'bg-orange-500/10 text-orange-400 border border-orange-500/20'}`}
               >
@@ -1258,7 +1265,7 @@ const BranchesView = ({
           </div>
         ))}
       </div>
-      <div className="lg:col-span-8 h-[min(70vh,700px)] min-h-[320px] rounded-[48px] overflow-hidden border border-white/10 shadow-2xl bg-[#0e0e0e] relative z-0 isolate">
+      <div className="lg:col-span-8 h-[min(62vh,700px)] sm:h-[min(70vh,700px)] min-h-[320px] rounded-[28px] sm:rounded-[48px] overflow-hidden border border-white/10 shadow-2xl bg-[#0e0e0e] relative z-0 isolate">
         <BranchesMap
           className="h-full w-full"
           branches={branches.map((b) => ({
@@ -1267,9 +1274,12 @@ const BranchesView = ({
             lat: b.lat,
             lng: b.lng,
             status: b.status,
+            addr: b.addr,
+            time: b.time,
+            phone: b.phone,
           }))}
           selectedBranchId={selectedBranchId}
-          onSelectBranch={onSelectBranch}
+          onHighlightBranch={onHighlightBranch}
         />
       </div>
     </div>
@@ -1289,7 +1299,7 @@ const PromosView = ({
   promos: PromoRow[];
   loading: boolean;
 }) => (
-  <main className="px-16 py-10 space-y-16 max-w-[1600px] mx-auto min-h-screen">
+  <main className="px-5 sm:px-10 lg:px-16 py-8 sm:py-10 space-y-12 sm:space-y-16 max-w-[1600px] mx-auto min-h-screen">
     {loading && <p className="text-white/40 text-sm font-bold">Loading promos…</p>}
     <div className="space-y-2">
       <button
@@ -1298,8 +1308,8 @@ const PromosView = ({
       >
         <ArrowLeft className="w-4 h-4" /> Back Home
       </button>
-      <h2 className="text-white text-6xl font-extrabold tracking-tighter">Promos & Offers</h2>
-      <p className="text-white/50 text-xl font-medium">Big crunches for even bigger savings.</p>
+      <h2 className="text-white text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tighter">Promos & Offers</h2>
+      <p className="text-white/50 text-base sm:text-xl font-medium">Big crunches for even bigger savings.</p>
     </div>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {promos.map((p) => (

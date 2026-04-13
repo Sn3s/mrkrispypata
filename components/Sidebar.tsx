@@ -42,7 +42,7 @@ const NavItem = ({
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
   return (
-    <aside className="w-[280px] h-screen fixed left-0 top-0 bg-surface border-r border-border flex flex-col p-8 z-50">
+    <aside className="hidden lg:flex w-[280px] h-screen fixed left-0 top-0 bg-surface border-r border-border flex-col p-8 z-50">
       <div className="flex items-center gap-4 px-2 mb-14">
         <div className="relative">
           <div className="w-12 h-10 bg-primary rounded-lg flex items-center justify-center relative shadow-[0_0_15px_rgba(255,209,0,0.2)] overflow-hidden">

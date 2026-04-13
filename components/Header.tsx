@@ -8,8 +8,8 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onHomeClick }) => {
   return (
-    <header className="h-[80px] border-b border-border bg-background sticky top-0 z-40 flex items-center justify-between px-8">
-      <div className="relative w-[400px]">
+    <header className="h-[72px] sm:h-[80px] border-b border-border bg-background sticky top-0 z-40 flex items-center justify-between px-4 sm:px-8 gap-3">
+      <div className="relative flex-1 max-w-[400px] hidden sm:block">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
         <input 
           type="text" 
@@ -18,7 +18,7 @@ export const Header: React.FC<HeaderProps> = ({ onHomeClick }) => {
         />
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 sm:gap-4 ml-auto">
         <button 
           onClick={onHomeClick}
           className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-border rounded-xl text-[12px] font-black uppercase tracking-widest text-muted hover:text-primary hover:border-primary/30 transition-all group"

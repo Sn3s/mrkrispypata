@@ -1,0 +1,16 @@
+/* Global guards for mobile layout */
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+}
+
