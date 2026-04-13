@@ -14,3 +14,18 @@ body {
   min-height: 100vh;
 }
 
+/* Mapbox popup theme (dark) */
+.branches-mapbox-popup .mapboxgl-popup-content {
+  background: #161616;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  padding: 12px 14px;
+}
+
+.branches-mapbox-popup .mapboxgl-popup-tip {
+  border-top-color: #161616 !important;
+  border-bottom-color: #161616 !important;
+}
+
+

@@ -162,15 +162,16 @@ export function BranchesMap({
             closeOnClick={false}
             offset={18}
             maxWidth="280px"
+            className="branches-mapbox-popup"
           >
-            <div style={{ minWidth: 220 }}>
-              <div style={{ fontWeight: 900, marginBottom: 6 }}>{selected.name}</div>
+            <div style={{ minWidth: 220, color: '#EDEDED' }}>
+              <div style={{ fontWeight: 900, marginBottom: 6, color: '#FFFFFF' }}>{selected.name}</div>
               <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#FFD100' }}>
                 {selected.status}
               </div>
-              {selected.addr ? <div style={{ fontSize: 12, opacity: 0.8, marginTop: 6 }}>{selected.addr}</div> : null}
-              {selected.time ? <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>{selected.time}</div> : null}
-              {selected.phone ? <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>{selected.phone}</div> : null}
+              {selected.addr ? <div style={{ fontSize: 12, opacity: 0.78, marginTop: 6 }}>{selected.addr}</div> : null}
+              {selected.time ? <div style={{ fontSize: 12, opacity: 0.78, marginTop: 4 }}>{selected.time}</div> : null}
+              {selected.phone ? <div style={{ fontSize: 12, opacity: 0.78, marginTop: 4 }}>{selected.phone}</div> : null}
             </div>
           </Popup>
         ) : null}
